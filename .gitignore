@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+storage/
+backend/storage/
+backend/warranty.db
+backend/.env
+backend/firebase-service-account.json
+frontend/node_modules/
+frontend/dist/
+.env
+samples/*.pdf
+samples/*.xlsx
+*.pdf
+backend/scripts/
+*.log

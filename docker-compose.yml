@@ -1,0 +1,68 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: warranty
+      POSTGRES_PASSWORD: warranty
+      POSTGRES_DB: warranty
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warranty -d warranty"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://warranty:warranty@db:5432/warranty
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_DIR: /data/storage
+      APP_SECRET: ${APP_SECRET:-dev-only-change-me-please-32b}
+      WORKER_INLINE: "0"
+      AUTO_SCAN: "1"
+      SEED_DEMO_USERS: "1"
+      RENDER_DPI: "300"
+    volumes:
+      - storage:/data/storage
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  worker:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://warranty:warranty@db:5432/warranty
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_DIR: /data/storage
+      APP_SECRET: ${APP_SECRET:-dev-only-change-me-please-32b}
+      WORKER_INLINE: "0"
+      SEED_DEMO_USERS: "0"
+      RENDER_DPI: "300"
+    volumes:
+      - storage:/data/storage
+    command: ["python", "-m", "app.worker"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  web:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  storage:

@@ -1,0 +1,1 @@
+"""Warranty Card Scanner backend."""
